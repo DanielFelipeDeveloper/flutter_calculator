@@ -1,7 +1,10 @@
 import 'package:flutter_calculator/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_calculator/riverpod.dart';
 import 'package:flutter_calculator/widgets/button_widget.dart';
+
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -10,7 +13,7 @@ Future main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  runApp(MyApp());
+  runApp(ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -24,7 +27,7 @@ class MyApp extends StatelessWidget {
           scaffoldBackgroundColor: MyColors.background1,
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        home: MyHomePage(title: title),
+        home: const MyHomePage(title: title),
       );
 }
 
@@ -32,7 +35,7 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   const MyHomePage({
-    required this.title,
+    @required this.title,
   });
 
   @override
@@ -60,26 +63,31 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget buildResult() => Container(
-    padding: const EdgeInsets.all(24),
-    child: Column(
-    mainAxisAlignment: MainAxisAlignment.end,
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      Text(
-        '0',
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: Colors.white, fontSize: 36),
-      ),
-      const SizedBox(height: 24),
-      Text(
-        '0',
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: Colors.grey, fontSize: 18),
-      )
-    ],
-  )
-  );
+  Widget buildResult() => Consumer(
+        builder: (context, watch, child) {
+          final state = watch(calculatorProvider.state);
+
+          return Container(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    state.equation,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: Colors.white, fontSize: 36, height: 1),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    state.result,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: Colors.grey, fontSize: 18),
+                  )
+                ],
+              ));
+        },
+      );
 
   Widget buildButtons() => Container(
         padding: EdgeInsets.all(16),
@@ -108,11 +116,40 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return Expanded(
         child: Row(
-        children: row.map((text) => ButtonWidget(
-          text: text, 
-          onClicked: () => print(text), 
-          onClickedLong: () => print(text)
-        )).toList()
-    ));
+            children: row
+                .map((text) => ButtonWidget(
+                    text: text,
+                    onClicked: () => onClickedButton(text),
+                    onClickedLong: () => onLongClickedButton(text),
+                  )
+                )
+                .toList()));
+  }
+
+  void onClickedButton(String buttonText) {
+    final calculator = context.read(calculatorProvider);
+
+    switch (buttonText) {
+      case 'AC':
+        calculator.reset();
+        break;
+      case '=':
+        calculator.equals();
+        break;
+      case '<':
+        calculator.delete();
+        break;
+      default:
+        calculator.append(buttonText);
+        break;
+    }
+  }
+
+  void onLongClickedButton(String text) {
+    final calculator = context.read(calculatorProvider);
+
+    if (text == '<') {
+      calculator.reset();
+    }
   }
 }

@@ -139,6 +139,9 @@ class _MyHomePageState extends State<MyHomePage> {
       case '<':
         calculator.delete();
         break;
+      case '.':
+        calculator.validatePoint();
+        break;
       default:
         calculator.append(buttonText);
         break;

@@ -12,6 +12,16 @@ class CalculatorNotifier extends StateNotifier<Calculator> {
     final equation = state.equation;
 
     if (equation.isNotEmpty) {
+      if (equation.substring(equation.length -1, equation.length) == '.') {
+        state = state.copy(canAddPoint: true);
+      } else if (Utils.isOperator(equation.substring(equation.length -1, equation.length))) {
+        final values = state.equation.split(RegExp(r"([*+\/-]+|[A-Za-z]+)"));
+
+        if (values[values.length -2].contains('.')) {
+          state = state.copy(canAddPoint: false);
+        } 
+      }
+      
       final newEquation = equation.substring(0, equation.length -1);
 
       if (newEquation.isEmpty) {
@@ -40,17 +50,19 @@ class CalculatorNotifier extends StateNotifier<Calculator> {
   }
 
   void append(String buttonText) {
-
-
     final equation = () {
       if (Utils.isOperator(buttonText) && Utils.isOperatorAtEnd(state.equation)) {
         final newEquation = state.equation.substring(0, state.equation.length -1);
-
+        
         return newEquation + buttonText;
+      } else if (state.shouldAppend && Utils.isOperator(buttonText)) {
+        state = state.copy(canAddPoint: true);
+
+        return state.equation == '0' ? buttonText : state.equation + buttonText;
       } else if (state.shouldAppend) {
         return state.equation == '0' ? buttonText : state.equation + buttonText;
       } else {
-        return Utils.isOperator(buttonText) ?  state.equation + buttonText : buttonText;
+        return Utils.isOperator(buttonText) ? state.equation + buttonText : buttonText;
       }
     }();
 
@@ -61,6 +73,12 @@ class CalculatorNotifier extends StateNotifier<Calculator> {
   void equals() {
     calculate();
     resetResult();
+  }
+
+  void validatePoint() {
+    if (state.canAddPoint && !Utils.isOperatorAtEnd(state.equation)) {
+      state = state.copy(equation: state.equation + '.', canAddPoint: false);
+    }
   }
 
   void calculate() {

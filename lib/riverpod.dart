@@ -52,16 +52,20 @@ class CalculatorNotifier extends StateNotifier<Calculator> {
   void append(String buttonText) {
     final equation = () {
       if (Utils.isOperator(buttonText) && Utils.isOperatorAtEnd(state.equation)) {
+        print('test1');
         final newEquation = state.equation.substring(0, state.equation.length -1);
         
         return newEquation + buttonText;
-      } else if (state.shouldAppend && Utils.isOperator(buttonText)) {
+      } else if (Utils.isOperator(buttonText)) {
+        print('test2');
         state = state.copy(canAddPoint: true);
 
         return state.equation == '0' ? buttonText : state.equation + buttonText;
       } else if (state.shouldAppend) {
+        print('test3');
         return state.equation == '0' ? buttonText : state.equation + buttonText;
       } else {
+        print('test4');
         return Utils.isOperator(buttonText) ? state.equation + buttonText : buttonText;
       }
     }();
